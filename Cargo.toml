@@ -1,0 +1,18 @@
+[package]
+name = "minicrab"
+version = "0.1.0"
+edition = "2021"
+license = "AGPLv3"
+default-run = "minicrab"
+
+[[bin]]
+name = "minicrab-server"
+path = "src/server/main.rs"
+
+[[bin]]
+name = "minicrab"
+path = "src/client/main.rs"
+
+[dependencies]
+# bevy = { version = "0.15.3", features = ["dynamic_linking"] } # cool, but breaks crane
+bevy = { version = "0.15.3" }
