@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use std::time::Instant;
 
 #[derive(Component)]
 struct Player;
@@ -8,35 +7,39 @@ struct Player;
 struct Name(String);
 
 #[derive(Debug, Component)]
-struct Position {
-    x: f32,
-    y: f32,
-    z: f32,
-    time: Instant,
-}
+struct Position(Vec3);
 
 #[derive(Debug, Component)]
-struct Velocity {
-    x: f32,
-    y: f32,
-    z: f32,
-}
+struct Velocity(Vec3);
 
-fn spawn_player_system(mut commands: Commands) {
+fn spawn_player_system(
+    mut commands: Commands,
+
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // player
     commands.spawn((
         Player,
         Name("Gustaw".to_string()),
-        Position {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-            time: Instant::now(),
+        Position(Vec3::new(0., 0., 0.)),
+        Velocity(Vec3::new(0., 0.1, 0.)),
+        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+        MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+    // light
+    commands.spawn((
+        PointLight {
+            shadows_enabled: true,
+            ..default()
         },
-        Velocity {
-            x: 0.0,
-            y: 1.0,
-            z: 0.0,
-        },
+        Transform::from_xyz(4.0, 8.0, 4.0),
+    ));
+    // camera
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
@@ -49,14 +52,16 @@ fn list_players_system(query: Query<(&Name, &Position, &Velocity), With<Player>>
     }
 }
 
-fn move_positions_system(mut query: Query<(&mut Position, &Velocity)>) {
-    for (mut position, velocity) in &mut query {
-        let now = Instant::now();
-        let seconds_delta = (now - position.time).as_secs_f32();
-        position.time = now;
-        position.x += velocity.x * seconds_delta;
-        position.y += velocity.y * seconds_delta;
-        position.z += velocity.z * seconds_delta;
+fn move_positions_system(
+    time: Res<Time>,
+    mut query: Query<(&mut Position, &mut Transform, &Velocity)>,
+) {
+    for (mut position, mut transform, velocity) in &mut query {
+        let seconds_delta = time.delta_secs();
+        position.0.x += velocity.0.x * seconds_delta;
+        position.0.y += velocity.0.y * seconds_delta;
+        position.0.z += velocity.0.z * seconds_delta;
+        transform.translation = position.0;
     }
 }
 
